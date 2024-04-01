@@ -1,5 +1,5 @@
 -- https://github.com/LorekeeperZinnia/Dex
-
+--Edited by relevant500 on discord (just added a decompiler, not by me)
 --[[
 	New Dex
 	Final Version

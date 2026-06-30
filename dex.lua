@@ -18,33 +18,17 @@
 
 local httpService = cloneref(game:GetService('HttpService'))
 
-local function decompile(scr)
-    local s, bytecode = pcall(getscriptbytecode, scr)
-    if not s then
-        return `failed to get bytecode { bytecode }`
-    end
-
-    local response = request({
-        Url = 'https://unluau.lonegladiator.dev/unluau/decompile',
-        Method = 'POST',
-        Headers = {
-            ['Content-Type'] = 'application/json',
-        },
-        Body = httpService:JSONEncode({
-            version = 5,
-            bytecode = crypt.base64.encode(bytecode)
-        })
-    })
-
-    local decoded = httpService:JSONDecode(response.Body)
-    if decoded.status ~= 'ok' then
-        return `decompilation failed: { decoded.status }`
-    end
-
-    return decoded.output
+getgenv().decomp = function(script_instance)
+  local bytecode = getscriptbytecode(script_instance)
+  local encoded = crypt.base64encode(bytecode)
+  return request(
+    {
+      Url = "http://localhost:3000/luau/decompile",
+      Method = "POST",
+      Body = encoded
+    }
+  ).Body
 end
-
-getgenv().decompile = decompile
 
 local nodes = {}
 local selection
@@ -4247,7 +4231,7 @@ local function main()
 	local PreviousScr = nil
 
 	ScriptViewer.ViewScript = function(scr)
-		local success, source = pcall(env.decompile or function() end, scr)
+		local success, source = pcall(env.decomp or function() end, scr)
 		if not success or not source then source, PreviousScr = "-- DEX - Source failed to decompile", nil else PreviousScr = scr end
 		codeFrame:SetText(source)
 		window:Show()
@@ -10383,7 +10367,7 @@ Main = (function()
 		
 		-- other
 		env.setfflag = setfflag
-		env.decompile = decompile
+		env.decomp = decomp
 		env.protectgui = protect_gui or (syn and syn.protect_gui)
 		env.gethui = gethui
 		env.setclipboard = setclipboard
